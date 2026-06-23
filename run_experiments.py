@@ -60,7 +60,7 @@ def train_config(
     if use_mcts:
         mcts = ActorCriticMCTS(model=model, c_puct=1.4)
         
-    loss_fn = HeuristicGuidedLoss(beta_start=beta_start, beta_decay=beta_decay, beta_min=0.05)
+    loss_fn = HeuristicGuidedLoss(beta_start=beta_start, beta_decay=beta_decay, beta_min=0.5)
     gamma = 0.95
     
     # Track statistics
@@ -79,6 +79,7 @@ def train_config(
         episode_states = []
         episode_actions = []
         episode_heuristics = []
+        episode_old_log_probs = []
         
         step = 0
         game_over = False
@@ -86,6 +87,14 @@ def train_config(
         
         # 1. Episode Simulation
         while not game_over and step < max_steps:
+            state_tensor = env.state_to_tensor(state, turn=1)
+            
+            # Query model for old log probs before taking step
+            model.eval()
+            with torch.no_grad():
+                logits, _ = model(state_tensor)
+            log_probs = torch.log_softmax(logits, dim=-1)
+            
             if use_mcts:
                 actions, probs = mcts.get_action_probabilities(
                     state, current_turn=1, game_env=env, num_searches=num_searches, temp=0.3
@@ -97,12 +106,6 @@ def train_config(
                     search_probs[act] = prob
                 chosen_action = np.random.choice(actions, p=probs)
             else:
-                # w/o MCTS: query model directly
-                model.eval()
-                state_tensor = env.state_to_tensor(state, turn=1)
-                with torch.no_grad():
-                    logits, _ = model(state_tensor)
-                
                 # Mask valid actions
                 valid_acts = env.get_valid_actions(state, turn=1)
                 probs_flat = torch.softmax(logits.squeeze(0), dim=0).numpy()
@@ -120,11 +123,13 @@ def train_config(
                 search_probs = masked_probs
                 
             heuristic_probs = env.get_heuristic_policy_flat(state)
+            old_log_prob = log_probs[0, chosen_action].item()
             
             # Record state transition
-            episode_states.append(env.state_to_tensor(state, turn=1))
+            episode_states.append(state_tensor)
             episode_actions.append(chosen_action)
             episode_heuristics.append(heuristic_probs)
+            episode_old_log_probs.append(old_log_prob)
             
             # Step in environment
             state, _ = env.step(state, chosen_action, turn=1)
@@ -163,6 +168,7 @@ def train_config(
             batch_actions = torch.tensor(episode_actions, dtype=torch.long)
             batch_returns = torch.tensor(returns, dtype=torch.float32)
             batch_heuristics = torch.tensor(np.array(episode_heuristics), dtype=torch.float32)
+            batch_old_log_probs = torch.tensor(episode_old_log_probs, dtype=torch.float32)
             
             # 8x Data Augmentation if requested (for Standard CNN baseline)
             if data_augmentation:
@@ -170,12 +176,14 @@ def train_config(
                 augmented_actions = []
                 augmented_returns = []
                 augmented_heuristics = []
+                augmented_old_log_probs = []
                 
                 for idx in range(len(episode_states)):
                     st = episode_states[idx] # (1, 3, 13, 13)
                     act = episode_actions[idx]
                     ret = returns[idx]
                     heur = episode_heuristics[idx]
+                    old_lp = episode_old_log_probs[idx]
                     
                     for i in range(8):
                         # Apply symmetry to states
@@ -189,18 +197,20 @@ def train_config(
                         augmented_actions.append(aug_act)
                         augmented_returns.append(ret)
                         augmented_heuristics.append(aug_heur)
+                        augmented_old_log_probs.append(old_lp)
                         
                 batch_states = torch.cat(augmented_states, dim=0)
                 batch_actions = torch.tensor(augmented_actions, dtype=torch.long)
                 batch_returns = torch.tensor(augmented_returns, dtype=torch.float32)
                 batch_heuristics = torch.tensor(np.array(augmented_heuristics), dtype=torch.float32)
+                batch_old_log_probs = torch.tensor(augmented_old_log_probs, dtype=torch.float32)
             
             avg_loss = 0.0
             for _ in range(5):
                 optimizer.zero_grad()
                 logits, values = model(batch_states)
                 loss, rl_loss_val, kl_loss_val, val_loss_val = loss_fn(
-                    logits, values, batch_actions, batch_returns, batch_heuristics
+                    logits, values, batch_actions, batch_returns, batch_heuristics, batch_old_log_probs
                 )
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)

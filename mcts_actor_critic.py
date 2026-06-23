@@ -72,6 +72,9 @@ class ActorCriticMCTS:
             # 2. Evaluation: Query the Actor-Critic model for policy prior and state value
             self.model.eval()
             state_tensor = game_env.state_to_tensor(state, turn)
+            # Move tensor to the same device as the model
+            device = next(self.model.parameters()).device
+            state_tensor = state_tensor.to(device)
             with torch.no_grad():
                 policy_logits, value_tensor = self.model(state_tensor)
                 
@@ -80,7 +83,7 @@ class ActorCriticMCTS:
             # Mask invalid actions to -1e9 before softmax to prevent out-of-bounds logits from dominating
             valid_actions = game_env.get_valid_actions(state, turn)
             masked_logits = policy_logits.squeeze(0).clone()
-            invalid_actions = [i for i in range(169) if i not in valid_actions]
+            invalid_actions = [i for i in range(8) if i not in valid_actions]
             masked_logits[invalid_actions] = -1e9
             
             probs = torch.softmax(masked_logits, dim=0).cpu().numpy()

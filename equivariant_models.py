@@ -42,6 +42,43 @@ class D4GroupAction:
             out = torch.flip(out, dims=[-1])
         return out
 
+    @staticmethod
+    def get_action_permutation(action_idx):
+        """
+        Returns the permutation of the 8 action indices under group action action_idx.
+        If we rotate/flip the grid, action `a` at state `s` corresponds to action `perm[a]` at state `g * s`.
+        """
+        action_vectors = [
+            (-1, 0),  # 0: Up
+            (1, 0),   # 1: Down
+            (0, -1),  # 2: Left
+            (0, 1),   # 3: Right
+            (-1, -1), # 4: Up-Left
+            (-1, 1),  # 5: Up-Right
+            (1, -1),  # 6: Down-Left
+            (1, 1)    # 7: Down-Right
+        ]
+        rot_k = action_idx % 4
+        flip = action_idx // 4
+        
+        perm = []
+        for dr, dc in action_vectors:
+            if flip == 1:
+                dc = -dc
+            # rot90 CCW: dr_new = -dc, dc_new = dr
+            for _ in range(rot_k):
+                dr, dc = -dc, dr
+            
+            found = False
+            for idx, vec in enumerate(action_vectors):
+                if vec == (dr, dc):
+                    perm.append(idx)
+                    found = True
+                    break
+            if not found:
+                raise ValueError(f"Vector ({dr}, {dc}) not found")
+        return perm
+
 
 class EquivariantConv2d(nn.Module):
     """
@@ -74,60 +111,55 @@ class EquivariantConv2d(nn.Module):
 
 class D4EquivariantNet(nn.Module):
     """
-    Symmetric Actor-Critic Policy-Value Network using D_4 Equivariant convolutions.
+    Symmetric Actor-Critic Policy-Value Network using Group Frame Projection.
+    Guarantees D4-equivariance for policy (8 directions) and D4-invariance for value.
     Inputs: (B, Channels, H, W)
     Outputs:
-        - policy: (B, H * W) probability distribution (Symmetric Action Space)
+        - policy: (B, 8) probability distribution (Symmetric Action Space over 8 directions)
         - value: (B, 1) scalar value (Invariant under symmetries)
     """
     def __init__(self, board_size=13, in_channels=3, num_filters=64, num_layers=3):
         super().__init__()
         self.board_size = board_size
-
-        # Stack equivariant convolutional blocks
-        layers = [
-            EquivariantConv2d(in_channels, num_filters, kernel_size=3, padding=1),
-            nn.BatchNorm2d(num_filters),
-            nn.ReLU()
-        ]
-        for _ in range(num_layers - 1):
-            layers += [
-                EquivariantConv2d(num_filters, num_filters, kernel_size=3, padding=1),
-                nn.BatchNorm2d(num_filters),
-                nn.ReLU()
-            ]
-        self.backbone = nn.Sequential(*layers)
-
-        # Policy Head (Equivariant Output via Fully Convolutional Layers)
-        self.policy_head = nn.Sequential(
-            EquivariantConv2d(num_filters, 2, kernel_size=1, padding=0),
-            nn.BatchNorm2d(2),
-            nn.ReLU(),
-            EquivariantConv2d(2, 1, kernel_size=1, padding=0),
-            nn.Flatten()
-        )
-
-        # Value Head (Symmetry Invariant Output)
-        self.value_head = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(num_filters, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1),
-            nn.Tanh()
-        )
+        self.base_net = StandardCNN(board_size, in_channels, num_filters, num_layers)
+        # Precompute action permutations for all 8 group elements
+        self.perms = [D4GroupAction.get_action_permutation(i) for i in range(8)]
 
     def forward(self, x):
-        features = self.backbone(x)
-        policy_logits = self.policy_head(features)
-        value = self.value_head(features)
+        batch_size = x.shape[0]
+        
+        # 1. Transform input under 8 symmetries, stack into a single batch
+        xs_trans = []
+        for i in range(8):
+            xs_trans.append(D4GroupAction.apply_action(x, i))
+        x_batched = torch.cat(xs_trans, dim=0) # (8 * B, C, H, W)
+        
+        # 2. Forward pass through standard CNN
+        logits_batched, values_batched = self.base_net(x_batched)
+        
+        # 3. Reshape outputs to separate group dimension
+        logits_g = logits_batched.view(8, batch_size, 8)
+        values_g = values_batched.view(8, batch_size, 1)
+        
+        # 4. Apply permutation to realign policy outputs to original orientation
+        realigned_logits_list = []
+        for i in range(8):
+            logits_i = logits_g[i] # (B, 8)
+            perm = self.perms[i]
+            realigned_i = logits_i[:, perm]
+            realigned_logits_list.append(realigned_i)
+            
+        # 5. Average policy and value outputs over the group (projection)
+        policy_logits = torch.mean(torch.stack(realigned_logits_list, dim=0), dim=0)
+        value = torch.mean(values_g, dim=0)
+        
         return policy_logits, value
 
 
 class StandardCNN(nn.Module):
     """
-    Standard CNN with equivalent depth and layer configurations as D4EquivariantNet,
-    but without equivariant constraints.
+    Standard CNN with equivalent depth and layer configurations,
+    but without equivariant constraints. Outputs 8 action logits.
     """
     def __init__(self, board_size=13, in_channels=3, num_filters=64, num_layers=3):
         super().__init__()
@@ -147,13 +179,11 @@ class StandardCNN(nn.Module):
             ]
         self.backbone = nn.Sequential(*layers)
 
-        # Policy Head (Standard Output via Fully Convolutional Layers)
+        # Policy Head (Outputs 8 directions)
         self.policy_head = nn.Sequential(
-            nn.Conv2d(num_filters, 2, kernel_size=1, padding=0),
-            nn.BatchNorm2d(2),
-            nn.ReLU(),
-            nn.Conv2d(2, 1, kernel_size=1, padding=0),
-            nn.Flatten()
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(num_filters, 8)
         )
 
         # Value Head

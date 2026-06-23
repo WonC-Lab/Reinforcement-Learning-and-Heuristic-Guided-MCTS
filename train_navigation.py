@@ -8,8 +8,8 @@ from heuristic_guided_loss import HeuristicGuidedLoss
 
 class SymmetricNavEnvAdapter:
     """
-    Adapts the 8-directional AutonomousNavigationEnv to a 13x13 (169 actions)
-    interface to natively interoperate with the D4EquivariantNet and MCTS.
+    Adapts the 8-directional AutonomousNavigationEnv to a direct 8-directional
+    action space to natively interoperate with the updated D4EquivariantNet and MCTS.
     """
     def __init__(self, base_env):
         self.base_env = base_env
@@ -19,64 +19,19 @@ class SymmetricNavEnvAdapter:
         return self.base_env.clone_state(state)
 
     def step(self, state, action, turn=1):
-        """
-        Translates a flat 13x13 grid action index (0-168) into
-        the corresponding 8-directional index (0-7), then steps the base environment.
-        """
-        r, c = self.base_env.get_agent_pos(state)
-        ar = action // self.size
-        ac = action % self.size
-        
-        # Calculate offset direction
-        dr, dc = ar - r, ac - c
-        
-        # Find matching action vector index (0-7)
-        action_idx = 0
-        for idx, vec in enumerate(self.base_env.action_vectors):
-            if vec == (dr, dc):
-                action_idx = idx
-                break
-                
-        return self.base_env.step(state, action_idx, turn)
+        return self.base_env.step(state, action, turn)
 
     def check_game_over(self, state, turn=1):
         return self.base_env.check_game_over(state, turn)
 
     def get_valid_actions(self, state, turn=1):
-        """
-        Converts 8-directional valid indices into 169 flat coordinates.
-        """
-        r, c = self.base_env.get_agent_pos(state)
-        valid_dirs = self.base_env.get_valid_actions(state, turn)
-        
-        flat_valid_actions = []
-        for d_idx in valid_dirs:
-            dr, dc = self.base_env.action_vectors[d_idx]
-            flat_valid_actions.append((r + dr) * self.size + (c + dc))
-            
-        return flat_valid_actions
+        return self.base_env.get_valid_actions(state, turn)
 
     def state_to_tensor(self, state, turn=1):
         return self.base_env.state_to_tensor(state, turn)
 
     def get_heuristic_policy_flat(self, state):
-        """
-        Converts the 8-directional heuristic policy into 169-dimensional policy target.
-        """
-        r, c = self.base_env.get_agent_pos(state)
-        probs_8 = self.base_env.get_heuristic_policy(state)
-        
-        flat_probs = np.zeros(self.size * self.size, dtype=np.float32)
-        for i, (dr, dc) in enumerate(self.base_env.action_vectors):
-            nr, nc = r + dr, c + dc
-            if self.base_env.in_bounds(nr, nc):
-                flat_probs[nr * self.size + nc] = probs_8[i]
-                
-        # Re-normalize just in case
-        total_p = np.sum(flat_probs)
-        if total_p > 0:
-            flat_probs /= total_p
-        return flat_probs
+        return self.base_env.get_heuristic_policy(state)
 
 
 def train_agent():
@@ -91,7 +46,7 @@ def train_agent():
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     mcts = ActorCriticMCTS(model=model, c_puct=1.4)
-    loss_fn = HeuristicGuidedLoss(beta_start=1.0, beta_decay=0.96, beta_min=0.05)
+    loss_fn = HeuristicGuidedLoss(beta_start=1.0, beta_decay=0.96, beta_min=0.5)
 
     num_episodes = 25
     max_steps_per_episode = 25
@@ -105,12 +60,21 @@ def train_agent():
         episode_states = []
         episode_actions = []
         episode_heuristics = []
+        episode_old_log_probs = []
         
         step = 0
         game_over = False
         winner = None
 
         while not game_over and step < max_steps_per_episode:
+            state_tensor = env.state_to_tensor(state, turn=1)
+            
+            # Get old log probability under current policy
+            model.eval()
+            with torch.no_grad():
+                logits, _ = model(state_tensor)
+            log_probs = torch.log_softmax(logits, dim=-1)
+
             actions, mcts_probs = mcts.get_action_probabilities(
                 state, current_turn=1, game_env=env, num_searches=30, temp=1.0
             )
@@ -120,13 +84,14 @@ def train_agent():
                 search_policy_probs[act] = prob
 
             heuristic_probs = env.get_heuristic_policy_flat(state)
-
-            state_tensor = env.state_to_tensor(state, turn=1)
-            episode_states.append(state_tensor)
             
             chosen_action = np.random.choice(actions, p=mcts_probs)
+            old_log_prob = log_probs[0, chosen_action].item()
+            
+            episode_states.append(state_tensor)
             episode_actions.append(chosen_action)
             episode_heuristics.append(heuristic_probs)
+            episode_old_log_probs.append(old_log_prob)
 
             state, _ = env.step(state, chosen_action, turn=1)
             game_over, winner = env.check_game_over(state, turn=1)
@@ -157,13 +122,14 @@ def train_agent():
             batch_actions = torch.tensor(episode_actions, dtype=torch.long)
             batch_returns = torch.tensor(returns, dtype=torch.float32)
             batch_heuristics = torch.tensor(np.array(episode_heuristics), dtype=torch.float32)
+            batch_old_log_probs = torch.tensor(episode_old_log_probs, dtype=torch.float32)
 
             avg_loss = 0.0
             for _ in range(5):
                 optimizer.zero_grad()
                 logits, values = model(batch_states)
                 loss, rl_loss_val, kl_loss_val, val_loss_val = loss_fn(
-                    logits, values, batch_actions, batch_returns, batch_heuristics
+                    logits, values, batch_actions, batch_returns, batch_heuristics, batch_old_log_probs
                 )
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)

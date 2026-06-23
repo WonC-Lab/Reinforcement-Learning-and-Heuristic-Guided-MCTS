@@ -33,6 +33,70 @@ class AutonomousNavigationEnv:
         }
         self.start = (1, 1)
         self.goal = (11, 11)
+        # Keep a copy of the canonical obstacles for evaluation/generalization tests
+        self._canonical_obstacles = frozenset(self.obstacles)
+
+    def randomize_obstacles(self, n_obstacles=12, rng=None):
+        """
+        Randomly places n_obstacles on the grid while guaranteeing a valid
+        BFS path exists from start to goal. Safe zones (2-cell radius around
+        start and goal) are never blocked.
+
+        Args:
+            n_obstacles: Number of obstacles to place (default 12, same as canonical).
+            rng: Optional numpy RandomState for reproducibility.
+        """
+        if rng is None:
+            rng = np.random
+        safe = set()
+        for dr in range(-2, 3):
+            for dc in range(-2, 3):
+                r, c = self.start[0] + dr, self.start[1] + dc
+                if 0 <= r < self.size and 0 <= c < self.size:
+                    safe.add((r, c))
+                r, c = self.goal[0] + dr, self.goal[1] + dc
+                if 0 <= r < self.size and 0 <= c < self.size:
+                    safe.add((r, c))
+
+        candidates = [
+            (r, c)
+            for r in range(self.size)
+            for c in range(self.size)
+            if (r, c) not in safe
+        ]
+
+        for _ in range(200):          # up to 200 retries
+            chosen = rng.choice(len(candidates), size=min(n_obstacles, len(candidates)),
+                                replace=False)
+            obs = {candidates[i] for i in chosen}
+            if self._bfs_path_exists(obs):
+                self.obstacles = obs
+                return
+        # Fallback: use canonical obstacles if random placement keeps failing
+        self.obstacles = set(self._canonical_obstacles)
+
+    def _bfs_path_exists(self, obstacles):
+        """Returns True if a valid 8-directional path exists from start to goal."""
+        from collections import deque
+        visited = set()
+        queue = deque([self.start])
+        visited.add(self.start)
+        while queue:
+            r, c = queue.popleft()
+            if (r, c) == self.goal:
+                return True
+            for dr, dc in self.action_vectors:
+                nr, nc = r + dr, c + dc
+                if (0 <= nr < self.size and 0 <= nc < self.size
+                        and (nr, nc) not in obstacles
+                        and (nr, nc) not in visited):
+                    visited.add((nr, nc))
+                    queue.append((nr, nc))
+        return False
+
+    def reset_canonical_obstacles(self):
+        """Restores the original static obstacle layout (used for evaluation)."""
+        self.obstacles = set(self._canonical_obstacles)
 
     def generate_initial_state(self):
         """
