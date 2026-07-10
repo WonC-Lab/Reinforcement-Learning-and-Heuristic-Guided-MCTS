@@ -87,7 +87,7 @@ $= \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1}
 
 Using $\rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1} = \rho_\mathcal{Y}(g') \cdot \rho_\mathcal{Y}(\tilde{g})^{-1}$ (contravariance of inverses and homomorphism property):
 
-$= \rho_\mathcal{Y}(g') \cdot \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right) = \rho_\mathcal{Y}(g') \cdot \mathcal{F}[h_\phi](x) \qquad \blacksquare$
+$= \rho_\mathcal{Y}(g') \cdot \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right) = \rho_\mathcal{Y}(g') \cdot \mathcal{F}h_\phi(x) \qquad \blacksquare$
 
 #### Theorem 2 (Softmax Policy Equivariance)
 
