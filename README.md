@@ -129,7 +129,7 @@ where $\pi^*$ is the optimal policy, provided the value estimator $V_\theta$ is 
 
 #### Theorem 4 (PUCT Cumulative Regret Bound)
 
-Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n Q^*(s,a^*) - Q^*(s, a_t)$ satisfies:
+Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n Q^{*}(s,a^*) - Q^{*}(s, a_t)$ satisfies:
 
 $\mathbb{E}R_n \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| \cdot n \cdot \ln n}$
 
