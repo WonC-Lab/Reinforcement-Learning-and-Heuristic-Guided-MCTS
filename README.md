@@ -72,7 +72,7 @@ $f(\rho_\mathcal{X}(g) \cdot x) = \rho_\mathcal{Y}(g) \cdot f(x) \quad \forall g
 
 Let $h_\phi: \mathcal{X} \to \mathcal{Y}$ be any function with parameters $\phi$. Define the **Group Frame Average**:
 
-$\mathcal{F}[h_\phi](x) := \frac{1}{|G|} \sum_{g \in G} \rho_\mathcal{Y}(g)^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(g) \cdot x\right)$
+$\mathcal{F} h_\phi(x) := \frac{1}{|G|} \sum_{g \in G} \rho_\mathcal{Y}(g)^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(g) \cdot x\right)$
 
 Then $\mathcal{F}[h_\phi]$ is **$G$-equivariant** regardless of $h_\phi$.
 
