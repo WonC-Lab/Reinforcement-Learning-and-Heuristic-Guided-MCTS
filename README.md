@@ -5,7 +5,7 @@ Official repository containing the theories, mathematical formulations, implemen
 ## Author & Affiliation
 * **WonChan Cho**
 * **Department of Mathematics, Sungkyunkwan University, Suwon, Republic of Korea**
-* Email: `wonc.lab@gmail.com`
+* Email: `chln0124@skku.edu`
 
 ---
 
