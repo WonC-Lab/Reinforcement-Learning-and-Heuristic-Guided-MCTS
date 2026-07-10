@@ -129,9 +129,9 @@ where $\pi^*$ is the optimal policy, provided the value estimator $V_\theta$ is 
 
 #### Theorem 4 (PUCT Cumulative Regret Bound)
 
-Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n [Q^*(s,a^*) - Q^*(s, a_t)]$ satisfies:
+Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n Q^*(s,a^*) - Q^*(s, a_t)$ satisfies:
 
-$\mathbb{E}[R_n] \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| \cdot n \cdot \ln n}$
+$\mathbb{E}R_n \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| \cdot n \cdot \ln n}$
 
 **Proof Sketch.** PUCT is equivalent to UCB1 (Auer et al., 2002) with $c_{\mathrm{puct}}$ playing the role of the confidence width parameter. For each suboptimal action $a$ with gap $\Delta_a = Q^*(s,a^*) - Q^*(s,a) > 0$, the expected number of times $a$ is selected satisfies $\mathbb{E}[N_n(a)] \leq \frac{4c_{\mathrm{puct}}^2 \ln n}{\Delta_a^2} + O(1)$. Summing: $\mathbb{E}[R_n] = \sum_{a \neq a^*} \Delta_a \mathbb{E}[N_n(a)] \leq 4c_{\mathrm{puct}}^2 \ln n \sum_{a \neq a^*} \frac{1}{\Delta_a} \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| n \ln n}$ by Cauchy-Schwarz. $\blacksquare$
 
