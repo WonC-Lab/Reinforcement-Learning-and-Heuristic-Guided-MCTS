@@ -24,15 +24,20 @@ class AutonomousNavigationEnv:
             (1, 1)    # 7: Down-Right
         ]
         
-        # Static obstacles coordinates
-        self.obstacles = {
-            (3, 3), (3, 4), (3, 5),
-            (5, 7), (6, 7), (7, 7),
-            (9, 2), (9, 3), (9, 4),
-            (8, 9), (9, 9), (10, 9)
-        }
         self.start = (1, 1)
-        self.goal = (11, 11)
+        self.goal = (size - 2, size - 2)
+        
+        # Static obstacles coordinates (canonical setup for size=13)
+        if size == 13:
+            self.obstacles = {
+                (3, 3), (3, 4), (3, 5),
+                (5, 7), (6, 7), (7, 7),
+                (9, 2), (9, 3), (9, 4),
+                (8, 9), (9, 9), (10, 9)
+            }
+        else:
+            self.obstacles = set()
+            
         # Keep a copy of the canonical obstacles for evaluation/generalization tests
         self._canonical_obstacles = frozenset(self.obstacles)
 
