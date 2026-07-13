@@ -72,13 +72,13 @@ $$f(\rho_\mathcal{X}(g) \cdot x) = \rho_\mathcal{Y}(g) \cdot f(x) \quad \forall 
 
 Let $h_\phi: \mathcal{X} \to \mathcal{Y}$ be any function with parameters $\phi$. Define the **Group Frame Average**:
 
-$$\mathcal{F}[h_\phi](x) := \frac{1}{|G|} \sum_{g \in G} \rho_\mathcal{Y}(g)^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(g) \cdot x\right)$$
+$$\mathcal{F}\left[h_\phi\right](x) := \frac{1}{|G|} \sum_{g \in G} \rho_\mathcal{Y}(g)^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(g) \cdot x\right)$$
 
-Then $\mathcal{F}[h_\phi]$ is **$G$-equivariant** regardless of $h_\phi$.
+Then $\mathcal{F}\left[h_\phi\right]$ is **$G$-equivariant** regardless of $h_\phi$.
 
 **Proof.** For any $g' \in G$:
 
-$$\mathcal{F}[h_\phi](\rho_\mathcal{X}(g') \cdot x)
+$$\mathcal{F}\left[h_\phi\right](\rho_\mathcal{X}(g') \cdot x)
 = \frac{1}{|G|} \sum_{g \in G} \rho_\mathcal{Y}(g)^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(gg') \cdot x\right)$$
 
 Substituting $\tilde{g} = gg'$ (bijection on $G$, since $g = \tilde{g}g'^{-1}$):
@@ -87,7 +87,7 @@ $$= \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1
 
 Using $\rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1} = \rho_\mathcal{Y}(g') \cdot \rho_\mathcal{Y}(\tilde{g})^{-1}$ (contravariance of inverses and homomorphism property):
 
-$$= \rho_\mathcal{Y}(g') \cdot \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right) = \rho_\mathcal{Y}(g') \cdot \mathcal{F}[h_\phi](x) \qquad \blacksquare$$
+$$= \rho_\mathcal{Y}(g') \cdot \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right) = \rho_\mathcal{Y}(g') \cdot \mathcal{F}\left[h_\phi\right](x) \qquad \blacksquare$$
 
 #### Theorem 2 (Softmax Policy Equivariance)
 
