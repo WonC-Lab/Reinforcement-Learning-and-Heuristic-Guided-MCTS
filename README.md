@@ -5,7 +5,7 @@ Official repository containing the theories, mathematical formulations, implemen
 ## Author & Affiliation
 * **WonChan Cho**
 * **Department of Mathematics, Sungkyunkwan University, Suwon, Republic of Korea**
-* Email: `wonc.lab@gmail.com`
+* Email: `chln0124@skku.edu`
 
 ---
 
@@ -55,7 +55,7 @@ We demonstrate that our framework achieves up to an 8× reduction in sample comp
 
 A 2D square grid possesses 8 spatial symmetries represented by the Dihedral Group $D_4$:
 
-$$D_4 = \langle r, m \mid r^4 = m^2 = e,\; mrm = r^{-1}\rangle = \{e, r, r^2, r^3, m, mr, mr^2, mr^3\}$$
+$D_4 = \langle r, m \mid r^4 = m^2 = e,\; mrm = r^{-1}\rangle = \{e, r, r^2, r^3, m, mr, mr^2, mr^3\}$
 
 where $r$ is a $90°$ CCW rotation and $m$ is a horizontal reflection. Our network enforces:
 
@@ -66,7 +66,7 @@ where $r$ is a $90°$ CCW rotation and $m$ is a horizontal reflection. Our netwo
 
 A function $f: \mathcal{X} \to \mathcal{Y}$ is **$G$-equivariant** with respect to representations $\rho_\mathcal{X}$ and $\rho_\mathcal{Y}$ if:
 
-$$f(\rho_\mathcal{X}(g) \cdot x) = \rho_\mathcal{Y}(g) \cdot f(x) \quad \forall g \in G,\; \forall x \in \mathcal{X}$$
+$f(\rho_\mathcal{X}(g) \cdot x) = \rho_\mathcal{Y}(g) \cdot f(x) \quad \forall g \in G,\; \forall x \in \mathcal{X}$
 
 #### Theorem 1 (Group Frame Averaging Equivariance)
 
@@ -83,7 +83,7 @@ $$\mathcal{F}\left[h_\phi\right](\rho_\mathcal{X}(g') \cdot x)
 
 Substituting $\tilde{g} = gg'$ (bijection on $G$, since $g = \tilde{g}g'^{-1}$):
 
-$$= \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right)$$
+$= \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1} \cdot h_\phi\!\left(\rho_\mathcal{X}(\tilde{g}) \cdot x\right)$
 
 Using $\rho_\mathcal{Y}(\tilde{g} g'^{-1})^{-1} = \rho_\mathcal{Y}(g') \cdot \rho_\mathcal{Y}(\tilde{g})^{-1}$ (contravariance of inverses and homomorphism property):
 
@@ -93,11 +93,11 @@ $$= \rho_\mathcal{Y}(g') \cdot \frac{1}{|G|} \sum_{\tilde{g} \in G} \rho_\mathca
 
 Let $f_\theta: \mathcal{S} \to \mathbb{R}^{|\mathcal{A}|}$ be a $G$-equivariant logit map, with $\rho_\mathcal{A}(g)$ acting as a permutation $\sigma_g \in S_{|\mathcal{A}|}$ on action indices. Then:
 
-$$\pi_\theta(g \cdot a \mid g \cdot s) = \pi_\theta(a \mid s) \quad \forall g \in G,\; a \in \mathcal{A},\; s \in \mathcal{S}$$
+$\pi_\theta(g \cdot a \mid g \cdot s) = \pi_\theta(a \mid s) \quad \forall g \in G,\; a \in \mathcal{A},\; s \in \mathcal{S}$
 
 **Proof.** By equivariance: $[f_\theta(g \cdot s)]_{g \cdot a} = [\rho_\mathcal{A}(g) \cdot f_\theta(s)]_{g \cdot a} = [f_\theta(s)]_a$. Since $\sigma_g$ is a permutation (hence a bijection on $\mathcal{A}$), the partition function is unchanged:
 
-$$\pi_\theta(g \cdot a \mid g \cdot s) = \frac{e^{[f_\theta(g \cdot s)]_{g \cdot a}}}{\sum_{a'} e^{[f_\theta(g \cdot s)]_{a'}}} = \frac{e^{[f_\theta(s)]_a}}{\sum_{a''} e^{[f_\theta(s)]_{a''}}} = \pi_\theta(a \mid s) \qquad \blacksquare$$
+$\pi_\theta(g \cdot a \mid g \cdot s) = \frac{e^{[f_\theta(g \cdot s)]_{g \cdot a}}}{\sum_{a'} e^{[f_\theta(g \cdot s)]_{a'}}} = \frac{e^{[f_\theta(s)]_a}}{\sum_{a''} e^{[f_\theta(s)]_{a''}}} = \pi_\theta(a \mid s) \qquad \blacksquare$
 
 #### Corollary 1 (Value Head D4-Invariance)
 
@@ -111,17 +111,17 @@ The value $V_\theta(s) = \frac{1}{|G|}\sum_{g \in G} V_\phi(\rho_\mathcal{S}(g) 
 
 We execute MCTS guided by the network prior. During selection, actions maximize the PUCT score:
 
-$$a_t^* = \arg\max_{a} \left[ Q(s, a) + c_{\mathrm{puct}} \cdot P(s, a) \cdot \frac{\sqrt{\sum_b N(s, b)}}{1 + N(s, a)} \right]$$
+$a_t^* = \arg\max_{a} \left[ Q(s, a) + c_{\mathrm{puct}} \cdot P(s, a) \cdot \frac{\sqrt{\sum_b N(s, b)}}{1 + N(s, a)} \right]$
 
 where $P(s, a) = \pi_\theta(a|s)$ is the policy prior, and bootstrapping replaces rollouts:
 
-$$v_{\mathrm{leaf}} = V_\theta(s_L)$$
+$v_{\mathrm{leaf}} = V_\theta(s_L)$
 
 #### Theorem 3 (MCTS Convergence to Optimal Policy)
 
 The MCTS visit-count policy $\pi_{\mathrm{MCTS}}(a|s) \propto N(s,a)^{1/\tau}$ satisfies:
 
-$$\lim_{n \to \infty} \pi_{\mathrm{MCTS}}(\cdot \mid s) = \pi^*(\cdot \mid s) \quad \text{as } \tau \to 0$$
+$\lim_{n \to \infty} \pi_{\mathrm{MCTS}}(\cdot \mid s) = \pi^*(\cdot \mid s) \quad \text{as } \tau \to 0$
 
 where $\pi^*$ is the optimal policy, provided the value estimator $V_\theta$ is consistent.
 
@@ -129,16 +129,16 @@ where $\pi^*$ is the optimal policy, provided the value estimator $V_\theta$ is 
 
 #### Theorem 4 (PUCT Cumulative Regret Bound)
 
-Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n [Q^*(s,a^*) - Q^*(s, a_t)]$ satisfies:
+Under the PUCT selection rule with prior $P(s,a) = \pi_\theta(a|s)$ and $n$ total simulations, the cumulative suboptimality regret $R_n = \sum_{t=1}^n Q^{*}(s,a^*) - Q^{*}(s, a_t)$ satisfies:
 
-$$\mathbb{E}[R_n] \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| \cdot n \cdot \ln n}$$
+$\mathbb{E}R_n \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| \cdot n \cdot \ln n}$
 
 **Proof Sketch.** PUCT is equivalent to UCB1 (Auer et al., 2002) with $c_{\mathrm{puct}}$ playing the role of the confidence width parameter. For each suboptimal action $a$ with gap $\Delta_a = Q^*(s,a^*) - Q^*(s,a) > 0$, the expected number of times $a$ is selected satisfies $\mathbb{E}[N_n(a)] \leq \frac{4c_{\mathrm{puct}}^2 \ln n}{\Delta_a^2} + O(1)$. Summing: $\mathbb{E}[R_n] = \sum_{a \neq a^*} \Delta_a \mathbb{E}[N_n(a)] \leq 4c_{\mathrm{puct}}^2 \ln n \sum_{a \neq a^*} \frac{1}{\Delta_a} \leq 2c_{\mathrm{puct}} \sqrt{|\mathcal{A}| n \ln n}$ by Cauchy-Schwarz. $\blacksquare$
 
 #### Proposition 1 (Single-Agent Backpropagation)
 
 For a single-agent MDP (unlike two-player zero-sum games), the value backpropagation:
-$$Q(s, a) \leftarrow Q(s, a) + \frac{v - Q(s, a)}{N(s, a)}$$
+$Q(s, a) \leftarrow Q(s, a) + \frac{v - Q(s, a)}{N(s, a)}$
 computes an unbiased running mean of the backed-up values and does **not** require sign alternation at each tree level.
 
 **Proof.** Let $v_1, \ldots, v_{N}$ be the sequence of backed-up values passing through edge $(s,a)$. The update rule satisfies $Q_{N} = Q_{N-1} + (v_N - Q_{N-1})/N$, which by induction gives $Q_N = \frac{1}{N}\sum_{k=1}^N v_k$. In a single-agent MDP, all values $v_k = V_\theta(s_L^{(k)}) > 0$ reflect the agent's own return; no opponent negation applies. $\blacksquare$
@@ -149,29 +149,29 @@ computes an unbiased running mean of the backed-up values and does **not** requi
 
 The total training objective is:
 
-$$L(\theta) = L_{PG}(\theta) + \beta \cdot D_{KL}(P_H(s) \parallel \pi_\theta(s)) + \frac{1}{2} L_V(\theta)$$
+$L(\theta) = L_{PG}(\theta) + \beta \cdot D_{KL}(P_H(s) \parallel \pi_\theta(s)) + \frac{1}{2} L_V(\theta)$
 
 #### Theorem 5 (Pseudo-Advantage Decomposition of the Gradient)
 
-$$\nabla_\theta L_{\mathrm{policy}}(\theta) = -\frac{1}{B} \sum_{i=1}^B \sum_{a \in \mathcal{A}} \left[ \mathbb{I}(a_i = a)\, A_i + \beta\, P_H(a \mid s_i) \right] \nabla_\theta \log \pi_\theta(a \mid s_i)$$
+$\nabla_\theta L_{\mathrm{policy}}(\theta) = -\frac{1}{B} \sum_{i=1}^B \sum_{a \in \mathcal{A}} \left[ \mathbb{I}(a_i = a)\, A_i + \beta\, P_H(a \mid s_i) \right] \nabla_\theta \log \pi_\theta(a \mid s_i)$
 
 **Proof.** Expand $D_{KL}$:
 
-$$D_{KL}(P_H \parallel \pi_\theta) = \sum_a P_H(a|s) \log P_H(a|s) - \sum_a P_H(a|s) \log \pi_\theta(a|s)$$
+$D_{KL}(P_H \parallel \pi_\theta) = \sum_a P_H(a|s) \log P_H(a|s) - \sum_a P_H(a|s) \log \pi_\theta(a|s)$
 
 The first term is $\theta$-independent (entropy of $P_H$), so:
 
-$$\nabla_\theta D_{KL}(P_H \parallel \pi_\theta) = -\sum_{a \in \mathcal{A}} P_H(a|s) \nabla_\theta \log \pi_\theta(a|s)$$
+$\nabla_\theta D_{KL}(P_H \parallel \pi_\theta) = -\sum_{a \in \mathcal{A}} P_H(a|s) \nabla_\theta \log \pi_\theta(a|s)$
 
 By the REINFORCE score function estimator:
 
-$$\nabla_\theta L_{PG}(\theta) = -\frac{1}{B}\sum_i A_i \nabla_\theta \log \pi_\theta(a_i|s_i) = -\frac{1}{B}\sum_i \sum_a \mathbb{I}(a_i=a) A_i \nabla_\theta \log\pi_\theta(a|s_i)$$
+$\nabla_\theta L_{PG}(\theta) = -\frac{1}{B}\sum_i A_i \nabla_\theta \log \pi_\theta(a_i|s_i) = -\frac{1}{B}\sum_i \sum_a \mathbb{I}(a_i=a) A_i \nabla_\theta \log\pi_\theta(a|s_i)$
 
 Adding the two terms gives the result. $\blacksquare$
 
 **Interpretation.** The effective advantage for action $a$ at state $s_i$ is:
 
-$$\tilde{A}_i(a) = \mathbb{I}(a_i = a)\, A_i + \beta\, P_H(a \mid s_i)$$
+$\tilde{A}_i(a) = \mathbb{I}(a_i = a)\, A_i + \beta\, P_H(a \mid s_i)$
 
 The heuristic term provides a dense, non-zero learning signal for **all** actions at **all** states, in contrast to the sparse $A_i$ which is only nonzero at the sampled action $a_i$.
 
@@ -181,11 +181,11 @@ The heuristic term provides a dense, non-zero learning signal for **all** action
 
 If $D_{KL}(P_H \parallel \pi_\theta) \leq \epsilon$ holds at any training step, then for all states $s$ and all actions $a$ with $P_H(a|s) \geq p_{\min} > 0$:
 
-$$\pi_\theta(a \mid s) \geq p_{\min} \cdot \exp\!\left(-\frac{\epsilon}{p_{\min}}\right)$$
+$\pi_\theta(a \mid s) \geq p_{\min} \cdot \exp\!\left(-\frac{\epsilon}{p_{\min}}\right)$
 
 **Proof.** For any single term $a$ in the KL sum:
 
-$$\epsilon \geq D_{KL}(P_H \parallel \pi_\theta) = \sum_{a'} P_H(a'|s) \log \frac{P_H(a'|s)}{\pi_\theta(a'|s)} \geq P_H(a|s) \log\frac{P_H(a|s)}{\pi_\theta(a|s)} \geq p_{\min} \log\frac{p_{\min}}{\pi_\theta(a|s)}$$
+$\epsilon \geq D_{KL}(P_H \parallel \pi_\theta) = \sum_{a'} P_H(a'|s) \log \frac{P_H(a'|s)}{\pi_\theta(a'|s)} \geq P_H(a|s) \log\frac{P_H(a|s)}{\pi_\theta(a|s)} \geq p_{\min} \log\frac{p_{\min}}{\pi_\theta(a|s)}$
 
 Rearranging: $\log\pi_\theta(a|s) \geq \log p_{\min} - \epsilon/p_{\min}$. Exponentiating yields the bound. $\blacksquare$
 
@@ -195,7 +195,7 @@ Rearranging: $\log\pi_\theta(a|s) \geq \log p_{\min} - \epsilon/p_{\min}$. Expon
 
 Let $\beta_t = \max(\beta_0 \gamma^t, \beta_{\min})$ for $\gamma \in (0,1)$. Suppose $L_{PG}(\theta)$ is $\mu$-strongly convex and $L$-smooth, and that gradient estimates are unbiased with bounded variance $\sigma^2$. Then:
 
-$$\mathbb{E}\left[\|\theta_t - \theta^*\|^2\right] \leq O\!\left(\frac{\sigma^2}{\mu t}\right) + O(\beta_{\min}^2)$$
+$\mathbb{E}\left[\|\theta_t - \theta^*\|^2\right] \leq O\!\left(\frac{\sigma^2}{\mu t}\right) + O(\beta_{\min}^2)$
 
 where $\theta^*$ minimizes $L_{PG}(\theta)$.
 
@@ -209,7 +209,7 @@ where $\theta^*$ minimizes $L_{PG}(\theta)$.
 
 Let $\mathcal{H}$ be the class of all bounded neural networks $f: \mathcal{S} \to \mathbb{R}^{|\mathcal{A}|}$, and $\mathcal{H}_{D_4}$ the subclass of $D_4$-equivariant functions obtained by group frame averaging. Assuming a free group action on $\mathcal{S}$:
 
-$$\text{VC-dim}(\mathcal{H}_{D_4}) \leq \frac{\text{VC-dim}(\mathcal{H})}{|D_4|} = \frac{\text{VC-dim}(\mathcal{H})}{8}$$
+$\text{VC-dim}(\mathcal{H}_{D_4}) \leq \frac{\text{VC-dim}(\mathcal{H})}{|D_4|} = \frac{\text{VC-dim}(\mathcal{H})}{8}$
 
 **Proof Sketch.** Under a free $G$-action, $\mathcal{S}$ decomposes into $|\mathcal{S}|/|G|$ disjoint orbits. A $G$-equivariant function is uniquely determined by its restriction to any single representative from each orbit. Hence the effective parameter space (and thus VC dimension) is reduced by a factor of $|G| = 8$. $\blacksquare$
 
@@ -217,7 +217,7 @@ $$\text{VC-dim}(\mathcal{H}_{D_4}) \leq \frac{\text{VC-dim}(\mathcal{H})}{|D_4|}
 
 To learn an $\epsilon$-optimal policy with confidence $1-\delta$, the PAC learning bound requires samples:
 
-$$m_{\mathcal{H}_{D_4}} \geq \frac{1}{\epsilon}\!\left(\frac{\text{VC-dim}(\mathcal{H})}{8} + \ln\frac{1}{\delta}\right) \approx \frac{m_\mathcal{H}}{8}$$
+$m_{\mathcal{H}_{D_4}} \geq \frac{1}{\epsilon}\!\left(\frac{\text{VC-dim}(\mathcal{H})}{8} + \ln\frac{1}{\delta}\right) \approx \frac{m_\mathcal{H}}{8}$
 
 demonstrating an **8× reduction in sample complexity** from the geometric symmetry structure alone.
 
